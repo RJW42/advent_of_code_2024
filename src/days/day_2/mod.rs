@@ -27,7 +27,7 @@ pub fn run(file_name: &str, part: Part) -> Result<u64, &'static str> {
 fn part_1(reports: Vec<Vec<u32>>) -> u64 {
   let mut safe_count = 0;
   for report in reports {
-    let mut increasing = report[0] < report[1];
+    let increasing = report[0] < report[1];
     let mut safe = true;
 
     for i in 1..report.len() {
