@@ -13,7 +13,8 @@ fn main() {
         1 => |p| day_1::run("inputs/day_1.txt", p),
         2 => |p| day_2::run("inputs/day_2.txt", p),
         3 => |p| day_3::run("inputs/day_3.txt", p),
-        4 => |p| day_4::run("inputs/day_4_small.txt", p),
+        4 => |p| day_4::run("inputs/day_4.txt", p),
+        5 => |p| day_5::run("inputs/day_5.txt", p),
         _ => |_| Result::Err("Invalid Day"),
     };
 

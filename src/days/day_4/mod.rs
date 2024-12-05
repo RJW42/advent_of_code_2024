@@ -1,4 +1,3 @@
-
 use crate::days::Part;
 use crate::util::read_lines;
 
@@ -94,7 +93,7 @@ fn part_2(input: Vec<Vec<char>>) -> u64 {
       if input[y][x] != 'A' {
         continue;
       }
-      println!("from {} {}", x, y);
+      // println!("from {} {}", x, y);
 
       let mut count = 0;
 
@@ -114,8 +113,9 @@ fn part_2(input: Vec<Vec<char>>) -> u64 {
         let s_cy = s_ny as usize;
         let m_cx = m_nx as usize;
         let m_cy = m_ny as usize;
+        // println!(" - s {} {} {}, m {} {} {}", s_cx, s_cy, input[s_cy][s_cx], m_cx, m_cy, input[m_cy][m_cx]);
 
-        if input[s_cx][s_cy] != 'S' || input[m_cx][m_cy] != 'M' {
+        if input[s_cy][s_cx] != 'S' || input[m_cy][m_cx] != 'M' {
           continue;
         }
 
