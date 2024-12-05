@@ -65,7 +65,7 @@ fn part_2(reports: Vec<Vec<u32>>) -> u64 {
         0
       };
 
-      let mut increasing = report[start] < report[start +  if skip == 1 {2} else {1}];
+      let increasing = report[start] < report[start +  if skip == 1 {2} else {1}];
       let mut safe = true;
 
       for i in (start+1)..report.len() {

@@ -137,7 +137,7 @@ fn part_2(line: String) -> u64 {
       } else if can_parse_dont(&mut chars) {
         in_dont = true;
       } else {
-        let i = chars.next();
+        let _ = chars.next();
       }
     } else {
       if can_parse_do(&mut chars) {
