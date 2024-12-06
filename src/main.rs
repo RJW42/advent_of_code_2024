@@ -7,7 +7,7 @@ use days::Part::{P1, P2};
 
 
 fn main() {
-    let day = 4;
+    let day = 6;
 
     let function = match day {
         1 => |p| day_1::run("inputs/day_1.txt", p),
@@ -15,6 +15,7 @@ fn main() {
         3 => |p| day_3::run("inputs/day_3.txt", p),
         4 => |p| day_4::run("inputs/day_4.txt", p),
         5 => |p| day_5::run("inputs/day_5.txt", p),
+        6 => |p| day_6::run("inputs/day_6.txt", p),
         _ => |_| Result::Err("Invalid Day"),
     };
 
