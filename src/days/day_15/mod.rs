@@ -128,7 +128,7 @@ fn print_map_2(input: &Vec<Vec<Entry2>>, px: usize, py: usize) {
     }
     println!();
   }
-  // println!("bc: {}", box_count);
+  println!("bc: {}", box_count);
   // if box_count != 604 {
   //   panic!()
   // }
