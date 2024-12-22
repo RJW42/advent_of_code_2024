@@ -1,0 +1,302 @@
+
+use crate::days::Part;
+use crate::util::read_lines;
+
+use std::collections::BTreeMap;
+
+const KEYPAD: [[char; 3]; 2] = [
+  ['#', '^', 'A'],
+  ['<', 'v', '>']
+];
+const NUMPAD: [[char; 3]; 4] = [
+  ['7', '8', '9'],
+  ['4', '5', '6'],
+  ['1', '2', '3'],
+  ['#', '0', 'A'],
+];
+
+const K_WIDTH: usize = KEYPAD[0].len();
+const K_HEIGHT: usize = KEYPAD.len();
+const N_WIDTH: usize = NUMPAD[0].len();
+const N_HEIGHT: usize = NUMPAD.len();
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+struct State<const T: usize> {
+  kb: [(u8, u8); T],
+  nb: (u8, u8),
+}
+
+/* <5>
+['0', '2', '9', 'A'] * 998 = 28942
+['9', '8', '0', 'A'] * 882 = 864360
+['1', '7', '9', 'A'] * 990 = 177210
+['4', '5', '6', 'A'] * 988 = 450528
+['3', '7', '9', 'A'] * 950 = 360050
+elpased: 43.5251444s
+P2 Results: 1881090
+*/
+
+pub fn run(file_name: &str, part: Part) -> Result<u64, &'static str> {
+  let Ok(lines) = read_lines(file_name) else {
+    return Err("Failed to read lines");
+  };
+
+  let mut b_moves: BTreeMap<char, (i32, i32)> = BTreeMap::new();
+  b_moves.insert('<', (0, -1));
+  b_moves.insert('>', (0,  1));
+  b_moves.insert('^', (-1, 0));
+  b_moves.insert('v', ( 1, 0));
+
+  let mut buttons = Vec::new();
+  for l in lines {
+    let line = l.expect("Failed to read lines");
+    buttons.push(line.chars().into_iter().collect());
+  }
+
+  let now = std::time::Instant::now();
+  let out = match part {
+    Part::P1 => Ok(part_1::<2>(buttons, &b_moves)),
+    Part::P2 => Ok(part_1::<4>(buttons, &b_moves)),
+  };
+  let end = std::time::Instant::now();
+  let elapsed = end.checked_duration_since(now).unwrap();
+
+  println!("elpased: {:?}", elapsed);
+  return out;
+}
+
+fn valid_k(r: &(u8, u8), m: char, b_moves: &BTreeMap<char, (i32, i32)>) -> Option<(u8, u8)> {
+  let (dy, dx) = &b_moves[&m];
+  let ny = r.0 as i32 + *dy;
+  let nx = r.1 as i32 + *dx;
+  if !(
+      ny < 0 || ny as usize >= K_HEIGHT ||
+      nx < 0 || nx as usize >= K_WIDTH || 
+      KEYPAD[ny as usize][nx as usize] == '#' 
+  ) {
+    Some((ny as u8, nx as u8))
+  } else {
+    None
+  }
+}
+
+fn valid_n(r: &(u8, u8), m: char, b_moves: &BTreeMap<char, (i32, i32)>) -> Option<(u8, u8)> {
+  let (dy, dx) = &b_moves[&m];
+  let ny = r.0 as i32 + *dy;
+  let nx = r.1 as i32 + *dx;
+  if !(
+      ny < 0 || ny as usize >= N_HEIGHT ||
+      nx < 0 || nx as usize >= N_WIDTH || 
+      NUMPAD[ny as usize][nx as usize] == '#' 
+  ) {
+    Some((ny as u8, nx as u8))
+  } else {
+    None
+  }
+}
+
+fn moves<const T: usize>(
+  s: &State<T>, 
+  start: usize,
+  end: usize,
+  b_moves: &BTreeMap<char, (i32, i32)>, 
+  desired: char
+) -> Vec<(char, bool, State<T>)> {
+  let mut moves = Vec::new();
+
+  for b in ['<', '^', '>','v'] {
+    // Moving R0
+    if let Some(p) = valid_k(&s.kb[start], b, b_moves) {
+      let mut n_st = s.clone();
+      n_st.kb[start] = p;
+      moves.push((b, false, n_st));
+    }
+  }
+
+  let mut rbi = start;
+
+  loop {
+    let rbi_b = KEYPAD[s.kb[rbi].0 as usize][s.kb[rbi].1 as usize];
+
+    if rbi + 1 >= T {
+      // Affecting final roobot
+      if rbi_b != 'A' {
+        // Moving final robot
+        if let Some(p) = valid_n(&s.nb, rbi_b, b_moves) {
+          let mut n_st = s.clone();
+          n_st.nb = p;
+          moves.push(('A', false, n_st));
+        }
+      } else {
+        // Output final robot
+        let output = NUMPAD[s.nb.0 as usize][s.nb.1 as usize];
+        if desired == output {
+          // Valid output
+          moves.push(('A', true, *s));
+        }
+      }
+      break;
+    }
+
+    if rbi + 1 >= end {
+      // Affecting final roobot
+      if rbi_b != 'A' {
+        // Moving RBI + 1
+        if let Some(p) = valid_k(&s.kb[rbi + 1], rbi_b, b_moves) {
+          let mut n_st = s.clone();
+          n_st.kb[rbi + 1] = p;
+          moves.push(('A', false, n_st));
+        }
+      } else {
+        // Output final robot
+        let output = KEYPAD[s.kb[rbi + 1].0 as usize][s.kb[rbi + 1].1 as usize];
+        if desired == output {
+          // Valid output
+          moves.push(('A', true, *s));
+        }
+      }
+      break;
+    }
+
+    if rbi_b != 'A' {
+      // Moving RBI + 1
+      if let Some(p) = valid_k(&s.kb[rbi + 1], rbi_b, b_moves) {
+        let mut n_st = s.clone();
+        n_st.kb[rbi + 1] = p;
+        moves.push(('A', false, n_st));
+      }
+      break;
+    }
+    // RBI + 1 Affecting RBI + 1
+    rbi += 1;
+  }
+
+  moves
+}
+
+fn part_1<const T: usize>(
+  buttons: Vec<Vec<char>>, 
+  b_moves: &BTreeMap<char, (i32, i32)>
+) -> u64 {
+  let mut output = 0;
+
+  for button in buttons {
+    let mut scores = 0;
+    let mut nb_start = (3, 2);
+
+    for ch in &button {
+      println!("{}", ch);
+      let (s, st) = cheapest::<T>(*ch, nb_start, b_moves);
+      scores += s;
+      nb_start = st;
+    }
+
+    let mut n = 0;
+    for i in 0..3 {
+      n = n * 10 + (button[i] as u8 - '0' as u8) as u32;
+    }
+    let inc = scores * n;
+    println!("{:?} * {} = {}", button, scores, inc);
+    output += inc as u64;
+    // todo!()
+  }
+
+  output
+}
+
+fn cheapest<const T:usize>(ch: char, nb_start: (u8, u8), b_moves: &BTreeMap<char, (i32, i32)>) -> (u32, (u8, u8)) {
+  let mut s_state = State::<T> {
+    kb: [(0, 2); T],
+    nb: nb_start,
+  };
+
+  let mut start = T - 1;
+  let mut end = T;
+
+  if T == 2 {
+    start = 0;
+    end = T;
+  } else {
+    start = T - 3;
+    end = T;
+  } 
+
+  let (_s, new_state, mut path) = cheapest_inner::<T>(ch, s_state.clone(), b_moves, start, end);
+
+  s_state = new_state;
+
+  loop {
+    let mut new_path = Vec::new();
+
+    for ch in path {
+      let (_s, new_state, partial_path) = cheapest_inner::<T>(ch, s_state.clone(), b_moves, start, end);
+      s_state = new_state;
+      for ch in partial_path {
+        new_path.push(ch);
+      }
+    }
+    println!(" - {:?} {:?} {} {:?}", start, end, new_path.len(), new_path);
+
+    start -= 2;
+    end -= start - 2;
+
+    if start == 0 {
+      return (new_path.len() as u32, s_state.nb.clone());
+    }
+
+    path = new_path;
+  }
+}
+
+fn cheapest_inner<const T:usize>(
+  ch: char, 
+  s_state: State::<T>,
+  b_moves: &BTreeMap<char, (i32, i32)>,
+  start: usize,
+  end: usize,
+) -> (u32, State::<T>, Vec<char>) {
+  let mut queue = Vec::new();
+  let mut gscore = BTreeMap::new();
+  let mut previous = BTreeMap::new();
+
+  queue.push(s_state);
+
+  gscore.insert(queue[0].clone(), 0);
+
+  loop {
+    queue.sort_by(|a, b| gscore[&b].cmp(&gscore[&a]));
+    let Some(st) = queue.pop() else {
+      panic!("cannot solve");
+    };
+
+    let score = gscore[&st] + 1;
+    for (pressed, solved, p_move) in moves(&st, start, end, b_moves, ch) {
+      if solved {
+        let mut path = Vec::new();
+        let mut curr = &st;
+        path.push(pressed);
+        loop {
+          if !previous.contains_key(curr) {
+            break;
+          }
+          let (p, next) = &previous[curr];
+          curr = next;
+          path.insert(0, *p);
+        }
+
+        return (score, p_move.clone(), path);
+      }
+
+      if gscore.contains_key(&p_move) && gscore[&p_move] <= score {
+        continue; // not a better move
+      }
+
+      gscore.insert(p_move.clone(), score);
+      previous.insert(p_move.clone(), (pressed, st));
+
+      if !queue.contains(&p_move) {
+        queue.push(p_move);
+      }
+    }
+  }
+}
